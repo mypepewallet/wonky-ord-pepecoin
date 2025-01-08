@@ -1,12 +1,12 @@
 [package]
-name = "ord-dogecoin"
-description = "◉ Ordinal wallet and block explorer for dogecoin"
+name = "ord-pepecoin"
+description = "◉ Ordinal wallet and block explorer for pepecoin"
 version = "0.5.1"
 license = "CC0-1.0"
 edition = "2021"
 autotests = false
-homepage = "https://github.com/apezord/ord-dogecoin"
-repository = "https://github.com/apezord/ord-dogecoin"
+homepage = "https://github.com/mypepewallet/wonky-ord-pepecoin"
+repository = "https://github.com/mypepewallet/wonky-ord-pepecoin"
 autobins = false
 rust-version = "1.67"
 
@@ -90,5 +90,5 @@ path = "tests/lib.rs"
 pulldown-cmark = "0.9.2"
 
 [patch.crates-io]
-bitcoin = { git = "https://github.com/apezord/rust-dogecoin" }
-bitcoincore-rpc = { git = "https://github.com/apezord/rust-dogecoincore-rpc" }
+bitcoin = { git = "https://github.com/mypepewallet/rust-pepecoin" }
+bitcoincore-rpc = { git = "https://github.com/mypepewallet/rust-pepecoincore-rpc" }
