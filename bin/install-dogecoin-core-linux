@@ -5,11 +5,11 @@ set -euxo pipefail
 version=1.14.6
 
 wget \
-  -O dogecoin.tar.gz \
-  https://github.com/dogecoin/dogecoin/releases/download/v$version/dogecoin-$version-x86_64-linux-gnu.tar.gz
+  -O pepecoin.tar.gz \
+  https://github.com/pepecoin/pepecoin/releases/download/v$version/pepecoin-$version-x86_64-linux-gnu.tar.gz
 
 tar \
-  -xzvf dogecoin.tar.gz \
+  -xzvf pepecoin.tar.gz \
   -C /usr/local/bin \
   --strip-components 1 \
-  dogecoin-$version/bin/{dogecoin-cli,dogecoind}
+  pepecoin-$version/bin/{pepecoin-cli,pepecoind}

@@ -7,8 +7,8 @@ use {super::*, bitcoincore_rpc::Auth};
     .args(&["chain_argument", "signet", "regtest", "testnet"]),
 ))]
 pub(crate) struct Options {
-  #[arg(long, help = "Load Dogecoin Core data dir from <DOGECOIN_DATA_DIR>.")]
-  pub(crate) dogecoin_data_dir: Option<PathBuf>,
+  #[arg(long, help = "Load Pepecoin Core data dir from <PEPECOIN_DATA_DIR>.")]
+  pub(crate) pepecoin_data_dir: Option<PathBuf>,
   #[arg(
     long = "chain",
     value_enum,
@@ -20,7 +20,7 @@ pub(crate) struct Options {
   pub(crate) config: Option<PathBuf>,
   #[arg(long, help = "Load configuration from <CONFIG_DIR>.")]
   pub(crate) config_dir: Option<PathBuf>,
-  #[arg(long, help = "Load Dogecoin Core RPC cookie file from <COOKIE_FILE>.")]
+  #[arg(long, help = "Load Pepecoin Core RPC cookie file from <COOKIE_FILE>.")]
   pub(crate) cookie_file: Option<PathBuf>,
   #[arg(long, help = "Use <CSP_ORIGIN> in Content-Security-Policy header. Set this to the public-facing URL of your ord instance.")]
   pub(crate) csp_origin: Option<String>,
@@ -45,8 +45,8 @@ pub(crate) struct Options {
   pub(crate) height_limit: Option<u32>,
   #[arg(long, help = "Use index at <INDEX>.")]
   pub(crate) index: Option<PathBuf>,
-  #[arg(long, help = "Track drc20 tokens and balances.")]
-  pub(crate) index_drc20: bool,
+  #[arg(long, help = "Track prc20 tokens and balances.")]
+  pub(crate) index_prc20: bool,
   #[arg(
   long,
   help = "Track location of dunes. DUNES ARE IN AN UNFINISHED PRE-ALPHA STATE AND SUBJECT TO CHANGE AT ANY TIME."
@@ -58,11 +58,11 @@ pub(crate) struct Options {
   pub(crate) index_transactions: bool,
   #[arg(long, short, help = "Use regtest. Equivalent to `--chain regtest`.")]
   pub(crate) regtest: bool,
-  #[arg(long, help = "Connect to Dogecoin Core RPC at <RPC_URL>.")]
+  #[arg(long, help = "Connect to Pepecoin Core RPC at <RPC_URL>.")]
   pub(crate) rpc_url: Option<String>,
   #[arg(
   long,
-  help = "Number of parallel requests to dogecoin node."
+  help = "Number of parallel requests to pepecoin node."
   )]
   pub(crate) nr_parallel_requests: Option<usize>,
   #[arg(long, short, help = "Use signet. Equivalent to `--chain signet`.")]
@@ -137,16 +137,16 @@ impl Options {
       return Ok(cookie_file.clone());
     }
 
-    let path = if let Some(dogecoin_data_dir) = &self.dogecoin_data_dir {
-      dogecoin_data_dir.clone()
+    let path = if let Some(pepecoin_data_dir) = &self.pepecoin_data_dir {
+      pepecoin_data_dir.clone()
     } else if cfg!(target_os = "linux") {
       dirs::home_dir()
         .ok_or_else(|| anyhow!("failed to retrieve home dir"))?
-        .join(".dogecoin")
+        .join(".pepecoin")
     } else {
       dirs::data_dir()
         .ok_or_else(|| anyhow!("failed to retrieve data dir"))?
-        .join("Dogecoin")
+        .join("Pepecoin")
     };
 
     let path = self.chain().join_with_data_dir(&path);
@@ -177,7 +177,7 @@ impl Options {
     }
   }
 
-  fn format_dogecoin_core_version(version: usize) -> String {
+  fn format_pepecoin_core_version(version: usize) -> String {
     format!(
       "{}.{}.{}.{}",
       version / 1000000,
@@ -187,7 +187,7 @@ impl Options {
     )
   }
 
-  pub(crate) fn dogecoin_rpc_client(&self) -> Result<Client> {
+  pub(crate) fn pepecoin_rpc_client(&self) -> Result<Client> {
     let cookie_file = self
       .cookie_file()
       .map_err(|err| anyhow!("failed to get cookie file path: {err}"))?;
@@ -195,14 +195,14 @@ impl Options {
     let rpc_url = self.rpc_url();
 
     log::info!(
-      "Connecting to Dogecoin Core RPC server at {rpc_url} using credentials from `{}`",
+      "Connecting to Pepecoin Core RPC server at {rpc_url} using credentials from `{}`",
       cookie_file.display()
     );
 
     let client =
       Client::new(&rpc_url, Auth::CookieFile(cookie_file.clone())).with_context(|| {
         format!(
-          "failed to connect to Dogecoin Core RPC at {rpc_url} using cookie file {}",
+          "failed to connect to Pepecoin Core RPC at {rpc_url} using cookie file {}",
           cookie_file.display()
         )
       })?;
@@ -212,29 +212,29 @@ impl Options {
       "test" => Chain::Testnet,
       "regtest" => Chain::Regtest,
       "signet" => Chain::Signet,
-      other => bail!("Dogecoin RPC server on unknown chain: {other}"),
+      other => bail!("Pepecoin RPC server on unknown chain: {other}"),
     };
 
     let ord_chain = self.chain();
 
     if rpc_chain != ord_chain {
-      bail!("Dogecoin RPC server is on {rpc_chain} but ord is on {ord_chain}");
+      bail!("Pepecoin RPC server is on {rpc_chain} but ord is on {ord_chain}");
     }
 
     Ok(client)
   }
 
-  pub(crate) fn dogecoin_rpc_client_for_wallet_command(&self, create: bool) -> Result<Client> {
-    let client = self.dogecoin_rpc_client()?;
+  pub(crate) fn pepecoin_rpc_client_for_wallet_command(&self, create: bool) -> Result<Client> {
+    let client = self.pepecoin_rpc_client()?;
 
     const MIN_VERSION: usize = 1140600;
 
-    let dogecoin_version = client.version()?;
-    if dogecoin_version < MIN_VERSION {
+    let pepecoin_version = client.version()?;
+    if pepecoin_version < MIN_VERSION {
       bail!(
-        "Dogecoin Core {} or newer required, current version is {}",
-        Self::format_dogecoin_core_version(MIN_VERSION),
-        Self::format_dogecoin_core_version(dogecoin_version),
+        "Pepecoin Core {} or newer required, current version is {}",
+        Self::format_pepecoin_core_version(MIN_VERSION),
+        Self::format_pepecoin_core_version(pepecoin_version),
       );
     }
 
@@ -334,11 +334,11 @@ mod tests {
       .to_string();
 
     assert!(cookie_file.ends_with(if cfg!(target_os = "linux") {
-      "/.dogecoin/.cookie"
+      "/.pepecoin/.cookie"
     } else if cfg!(windows) {
-      r"\Dogecoin\.cookie"
+      r"\Pepecoin\.cookie"
     } else {
-      "/Dogecoin/.cookie"
+      "/Pepecoin/.cookie"
     }))
   }
 
@@ -354,18 +354,18 @@ mod tests {
       .to_string();
 
     assert!(cookie_file.ends_with(if cfg!(target_os = "linux") {
-      "/.dogecoin/signet/.cookie"
+      "/.pepecoin/signet/.cookie"
     } else if cfg!(windows) {
-      r"\Dogecoin\signet\.cookie"
+      r"\Pepecoin\signet\.cookie"
     } else {
-      "/Dogecoin/signet/.cookie"
+      "/Pepecoin/signet/.cookie"
     }));
   }
 
   #[test]
-  fn cookie_file_defaults_to_dogecoin_data_dir() {
+  fn cookie_file_defaults_to_pepecoin_data_dir() {
     let arguments =
-      Arguments::try_parse_from(["ord", "--dogecoin-data-dir=foo", "--chain=signet", "index"])
+      Arguments::try_parse_from(["ord", "--pepecoin-data-dir=foo", "--chain=signet", "index"])
         .unwrap();
 
     let cookie_file = arguments
@@ -507,8 +507,8 @@ mod tests {
     .unwrap();
 
     assert_eq!(
-      options.dogecoin_rpc_client().unwrap_err().to_string(),
-      "Dogecoin RPC server is on testnet but ord is on mainnet"
+      options.pepecoin_rpc_client().unwrap_err().to_string(),
+      "Pepecoin RPC server is on testnet but ord is on mainnet"
     );
   }
 

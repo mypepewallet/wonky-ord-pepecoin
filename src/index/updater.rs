@@ -8,12 +8,12 @@ use {
   tokio::sync::mpsc::{error::TryRecvError, Receiver, Sender},
 };
 
-use crate::drc20::BlockContext;
-use crate::index::updater::drc20_updater::Drc20Updater;
+use crate::prc20::BlockContext;
+use crate::index::updater::prc20_updater::Prc20Updater;
 use crate::sat::Sat;
 use crate::sat_point::SatPoint;
 
-mod drc20_updater;
+mod prc20_updater;
 mod dune_updater;
 mod inscription_updater;
 
@@ -263,7 +263,7 @@ impl<'index> Updater<'_> {
     // Batch 2048 missing inputs at a time. Arbitrarily chosen for now, maybe higher or lower can be faster?
     // Did rudimentary benchmarks with 1024 and 4096 and time was roughly the same.
     const BATCH_SIZE: usize = 2048 * 10;
-    // Keep in mind that default rpcworkqueue in dogecoind is 16, meaning more than 16 concurrent requests will be rejected.
+    // Keep in mind that default rpcworkqueue in pepecoind is 16, meaning more than 16 concurrent requests will be rejected.
     // Since we are already requesting blocks on a separate thread, and we don't want to break if anything
     // else runs a request, we need to keep this a bit lower as configured.
     let parallel_requests = index.nr_parallel_requests;
@@ -403,11 +403,11 @@ impl<'index> Updater<'_> {
     let mut statistic_to_count = wtx.open_table(STATISTIC_TO_COUNT)?;
     let mut transaction_id_to_transaction = wtx.open_table(TRANSACTION_ID_TO_TRANSACTION)?;
 
-    let mut drc20_token_info = wtx.open_table(DRC20_TOKEN)?;
-    let mut drc20_token_holder = wtx.open_multimap_table(DRC20_TOKEN_HOLDER)?;
-    let mut drc20_token_balance = wtx.open_table(DRC20_BALANCES)?;
-    let mut drc20_inscribe_transfer = wtx.open_table(DRC20_INSCRIBE_TRANSFER)?;
-    let mut drc20_transferable_log = wtx.open_table(DRC20_TRANSFERABLELOG)?;
+    let mut prc20_token_info = wtx.open_table(PRC20_TOKEN)?;
+    let mut prc20_token_holder = wtx.open_multimap_table(PRC20_TOKEN_HOLDER)?;
+    let mut prc20_token_balance = wtx.open_table(PRC20_BALANCES)?;
+    let mut prc20_inscribe_transfer = wtx.open_table(PRC20_INSCRIBE_TRANSFER)?;
+    let mut prc20_transferable_log = wtx.open_table(PRC20_TRANSFERABLELOG)?;
 
     let mut lost_sats = statistic_to_count
       .get(&Statistic::LostSats.key())?
@@ -535,16 +535,16 @@ impl<'index> Updater<'_> {
         }
       }
 
-      if index.index_drc20 && self.height >= index.first_inscription_height {
+      if index.index_prc20 && self.height >= index.first_inscription_height {
         let operations = inscription_updater.operations.clone();
 
-        // Create a protocol manager to index the block of drc20 data.
-        Drc20Updater::new(
-          &mut drc20_token_info,
-          &mut drc20_token_holder,
-          &mut drc20_token_balance,
-          &mut drc20_inscribe_transfer,
-          &mut drc20_transferable_log,
+        // Create a protocol manager to index the block of prc20 data.
+        Prc20Updater::new(
+          &mut prc20_token_info,
+          &mut prc20_token_holder,
+          &mut prc20_token_balance,
+          &mut prc20_inscribe_transfer,
+          &mut prc20_transferable_log,
           &inscription_id_to_inscription_entry,
           &mut transaction_id_to_transaction,
         )?

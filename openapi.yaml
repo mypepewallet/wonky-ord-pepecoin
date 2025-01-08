@@ -1,12 +1,12 @@
 openapi: 3.0.0
 info:
   title: Wonky Ord API
-  description: API for getting transactions, blocks, balances, inscriptions, and dune info on Dogecoin.
+  description: API for getting transactions, blocks, balances, inscriptions, and dune info on Pepecoin.
   version: 1.0.0
 servers:
   - url: http://localhost:8080
     description: Local development server
-  - url: https://wonky-ord.dogeord.io
+  - url: https://wonky-ord.pepeord.io
     description: Wonky Prod Server
 
 paths:
@@ -181,10 +181,10 @@ paths:
                   total_inscription_shibes:
                     type: integer
 
-  /drc20/balance/{address}:
+  /prc20/balance/{address}:
     get:
-      summary: Get DRC20 balance for an address
-      operationId: getDrc20Balance
+      summary: Get PRC20 balance for an address
+      operationId: getPrc20Balance
       parameters:
         - name: address
           in: path
@@ -212,43 +212,43 @@ paths:
             type: integer
       responses:
         '200':
-          description: DRC20 balance
+          description: PRC20 balance
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  drc20:
+                  prc20:
                     type: array
                     items:
                       type: object
 
-  /drc20/tick/{tick}:
+  /prc20/tick/{tick}:
     get:
-      summary: Get DRC20 tick information
-      operationId: getDrc20TickInfo
+      summary: Get PRC20 tick information
+      operationId: getPrc20TickInfo
       parameters:
         - name: tick
           in: path
           required: true
-          description: DRC20 tick identifier
+          description: PRC20 tick identifier
           schema:
             type: string
       responses:
         '200':
-          description: DRC20 tick information
+          description: PRC20 tick information
           content:
             application/json:
               schema:
                 type: object
 
-  /drc20/tick:
+  /prc20/tick:
     get:
-      summary: Get all DRC20 tick information
-      operationId: getAllDrc20TickInfo
+      summary: Get all PRC20 tick information
+      operationId: getAllPrc20TickInfo
       responses:
         '200':
-          description: DRC20 tick information
+          description: PRC20 tick information
           content:
             application/json:
               schema:
@@ -256,10 +256,10 @@ paths:
                 items:
                   type: object
 
-  /drc20/validate:
+  /prc20/validate:
     get:
-      summary: Validate DRC20 inscriptions
-      operationId: validateDrc20
+      summary: Validate PRC20 inscriptions
+      operationId: validatePrc20
       parameters:
         - name: addresses
           in: query
@@ -512,10 +512,10 @@ paths:
               schema:
                 type: object
 
-  /drc20/balance/{address}/{page}:
+  /prc20/balance/{address}/{page}:
     get:
-      summary: Get paginated DRC20 balance for an address
-      operationId: getDrc20BalancePaginated
+      summary: Get paginated PRC20 balance for an address
+      operationId: getPrc20BalancePaginated
       parameters:
         - name: address
           in: path
@@ -543,7 +543,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: DRC20 balance
+          description: PRC20 balance
           content:
             application/json:
               schema:
