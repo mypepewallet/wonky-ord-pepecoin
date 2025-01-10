@@ -22,7 +22,7 @@ You will have to launch your own Pepecoin node and have it fully synced. You can
 2. Follow the [installation instructions](https://github.com/pepecoin/pepecoin/blob/master/INSTALL.md)
    1. We started the Pepecoin Core with the following flags:
       ```shell
-      pepecoind -txindex -rpcuser=foo -rpcpassword=bar -rpcport=22555 -rpcallowip=0.0.0.0/0 -rpcbind=127.0.0.1
+      pepecoind -txindex -rpcuser=foo -rpcpassword=bar -rpcport=8038 -rpcallowip=0.0.0.0/0 -rpcbind=127.0.0.1
       ```
    2. Make sure your Pepecoin node is fully synced before starting the indexer.
    3. ‼️ **IMPORTANT** Ensure to replace `foo` and `bar` with your own username and password. **IMPORTANT** ‼️
@@ -40,7 +40,7 @@ export STARTING_SATS_PATH=/home/pepeuser/wonky-ord-pepecoin/starting_sats.json
 # ensure the data directory exists
 mkdir -p /mnt/ord-node/indexer-data-main
 
-# replace YOUR_RPC_URL with the URL of your Pepecoin node like: http://foo:bar@127.0.0.1:22555
+# replace YOUR_RPC_URL with the URL of your Pepecoin node like: http://foo:bar@127.0.0.1:8038
 
 // Start Indexing
 ord --rpc-url=YOUR_RPC_URL --data-dir=/mnt/ord-node/indexer-data-main --nr-parallel-requests=16 --first-inscription-height=4609723 --first-dune-height=5084000 --index-dunes --index-transactions --index-prc20 index
@@ -77,7 +77,7 @@ You can use a docker image to run the ord indexer / server.
 
 ### Build the Docker image
 ```shell
-docker build -t verypepelabs/wonky-ord-pepecoin .
+docker build -t mypepewallet/wonky-ord-pepecoin .
 ```
 ### Start the ord in a docker container
 ```shell

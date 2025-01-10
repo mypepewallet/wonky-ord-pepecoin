@@ -295,7 +295,7 @@ mod tests {
   fn use_default_network() {
     let arguments = Arguments::try_parse_from(["ord", "index"]).unwrap();
 
-    assert_eq!(arguments.options.rpc_url(), "127.0.0.1:22555/wallet/ord");
+    assert_eq!(arguments.options.rpc_url(), "127.0.0.1:8038/wallet/ord");
 
     assert!(arguments
       .options
