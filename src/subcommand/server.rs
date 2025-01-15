@@ -655,11 +655,6 @@ impl Server {
       if !index.get_dune_balances_for_outpoint(outpoint)?.is_empty() {
         continue;
       }
-      if !show_all
-        && (element_counter < start_index || element_counter > start_index + items_per_page - 1)
-      {
-        continue;
-      }
 
       let txid = outpoint.txid;
       let vout = outpoint.vout;
@@ -680,6 +675,13 @@ impl Server {
         if !show_unsafe {
           continue;
         }
+      }
+
+      if !show_all
+        && (element_counter < start_index || element_counter > start_index + items_per_page - 1)
+      {
+        element_counter += 1;
+        continue;
       }
 
       element_counter += 1;
