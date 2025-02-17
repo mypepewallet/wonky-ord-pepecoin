@@ -1427,7 +1427,7 @@ impl Server {
       ));
     }
 
-    let holder = index.get_prc20_token_holder(&tick.clone())?;
+    let holders = index.get_prc20_token_holder(&tick.clone())?;
     let token_info = index.get_prc20_token_info(&tick.clone())?;
 
     let total_holders = holders.len();
