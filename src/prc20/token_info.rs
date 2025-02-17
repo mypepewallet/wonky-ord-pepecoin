@@ -40,3 +40,8 @@ pub struct HoldersInfoForTick {
   pub holder_to_balance: HashMap<String, HolderBalanceForTick>,
   pub nr_of_holder: usize,
 }
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct HolderCountForTicks {
+  pub holder_counts: HashMap<String, usize>,
+}

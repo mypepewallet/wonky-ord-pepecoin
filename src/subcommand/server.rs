@@ -48,7 +48,7 @@ use {
   },
 };
 use crate::prc20::operation::{deserialize_prc20_operation, Action};
-use crate::prc20::token_info::{ExtendedTokenInfo, HolderBalanceForTick, HoldersInfoForTick};
+use crate::prc20::token_info::{ExtendedTokenInfo, HolderBalanceForTick, HoldersInfoForTick, HolderCountForTicks};
 use crate::templates::{PRC20Balance, PRC20Output, PRC20UtxoOutput};
 
 mod error;
@@ -745,7 +745,6 @@ impl Server {
 
     let outpoints: Vec<OutPoint> = index.get_account_outputs(address.clone())?;
 
-    let mut utxos = Vec::new();
     let mut payment_utxos = Vec::new();
     let mut inscription_utxos = Vec::new();
     let mut total_shibes = 0u128;
@@ -1543,14 +1542,14 @@ impl Server {
     };
 
     let holder_counts = index
-        .get_prc20_token_holders_count_batch(&ticks)
-        .map_err(|err| ServerError::InternalServerError(err.to_string()))?;
+        .get_prc20_token_holders_count_batch(&ticks)?;
 
-    let response_body = serde_json::json!({
-        "holder_counts": holder_counts
-    });
-
-    Ok(Response::new(response_body.to_string().into()))
+    Ok(
+      Json(HolderCountForTicks {
+        holder_counts
+      })
+      .into_response(),
+    )
   }
 
   async fn prc20_all_tick_info(
