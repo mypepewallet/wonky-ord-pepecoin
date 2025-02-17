@@ -116,12 +116,32 @@ pub(crate) struct UtxoAddressJson {
   pub(crate) total_inscription_shibes: u128,
 }
 
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub(crate) struct TypeUtxoAddressJson {
+  pub(crate) payment_utxos: Vec<Utxo>,
+  pub(crate) inscription_utxos: Vec<Utxo>,
+  pub(crate) total_utxos: usize,
+  pub(crate) total_shibes: u128,
+  pub(crate) total_inscription_shibes: u128,
+}
+
 #[derive(Deserialize)]
 struct UtxoBalanceQuery {
   limit: Option<usize>,
   show_all: Option<bool>,
   show_unsafe: Option<bool>,
   value_filter: Option<u64>,
+}
+
+#[derive(Deserialize)]
+struct Prc20HolderQuery {
+  page: Option<usize>,
+  limit: Option<usize>
+}
+
+#[derive(Deserialize)]
+struct Prc20HolderCountQuery {
+  ticks: String,
 }
 
 #[derive(Deserialize)]
@@ -346,6 +366,7 @@ impl Server {
         .route("/prc20/validate", get(Self::prc20_validate))
         .route("/prc20/ticks", get(Self::prc20_all_ticks))
         .route("/prc20/tick/holder/:tick", get(Self::prc20_tick_holder))
+        .route("/prc20/tick/holder/count", get(Self::prc20_tick_holder_count))
         .route("/dunes_on_outputs", get(Self::dunes_by_outputs))
         .route("/sat/:sat", get(Self::sat))
         .route("/search", get(Self::search_by_query))
@@ -705,6 +726,73 @@ impl Server {
     Ok(
       Json(UtxoAddressJson {
         utxos,
+        total_shibes,
+        total_utxos: element_counter,
+        total_inscription_shibes: inscription_shibes,
+      })
+      .into_response(),
+    )
+  }
+
+  async fn get_all_utxos_by_address(
+    index: Arc<Index>,
+    address: String,
+    page: Option<u32>,
+    query: UtxoBalanceQuery,
+  ) -> ServerResult<Response> {
+
+    let mut element_counter = 0;
+
+    let outpoints: Vec<OutPoint> = index.get_account_outputs(address.clone())?;
+
+    let mut utxos = Vec::new();
+    let mut payment_utxos = Vec::new();
+    let mut inscription_utxos = Vec::new();
+    let mut total_shibes = 0u128;
+    let mut inscription_shibes = 0u128;
+
+    for outpoint in outpoints {
+      let txid = outpoint.txid;
+      let vout = outpoint.vout;
+      let output = index
+        .get_transaction(txid)?
+        .ok_or_not_found(|| format!("{txid} current transaction"))?
+        .output
+        .into_iter()
+        .nth(vout.try_into().unwrap())
+        .ok_or_not_found(|| format!("{vout} current transaction output"))?;
+
+      total_shibes += output.value as u128;
+
+      let confirmations = if let Some(block_hash_info) = index.get_transaction_blockhash(txid)? {
+        block_hash_info.confirmations
+      } else {
+        None
+      };
+
+      if !index.get_inscriptions_on_output(outpoint)?.is_empty() {
+        inscription_shibes += output.value as u128;
+        inscription_utxos.push(Utxo {
+          txid,
+          vout,
+          script: output.script_pubkey,
+          shibes: output.value,
+          confirmations,
+        });
+      } else {
+        payment_utxos.push(Utxo {
+          txid,
+          vout,
+          script: output.script_pubkey,
+          shibes: output.value,
+          confirmations,
+        });
+      }
+    }
+    Ok(
+      Json(TypeUtxoAddressJson {
+        payment_utxos,
+        inscription_utxos,
         total_shibes,
         total_utxos: element_counter,
         total_inscription_shibes: inscription_shibes,
@@ -1322,6 +1410,74 @@ impl Server {
     }
   }
 
+  async fn paged_prc20_tick_holder(
+    Extension(index): Extension<Arc<Index>>,
+    Path(tick): Path<String>,
+    Query(query): Query<Prc20HolderQuery>,
+  ) -> Result<Response, ServerError> {
+    let tick =
+      &Tick::from_str(tick.as_str()).map_err(|err| ServerError::BadRequest(err.to_string()))?;
+    
+    let page = query.page.unwrap_or(1);
+    let items_per_page = query.limit.unwrap_or(10);
+
+    if page < 1 || items_per_page < 1 {
+      return Err(ServerError::BadRequest(
+          "Page and limit must be greater than 0".to_string(),
+      ));
+    }
+
+    let holder = index.get_prc20_token_holder(&tick.clone())?;
+    let token_info = index.get_prc20_token_info(&tick.clone())?;
+
+    let total_holders = holders.len();
+    let start_index = (page - 1) * items_per_page;
+    let end_index = std::cmp::min(start_index + items_per_page, total_holders);
+
+    if start_index >= total_holders {
+      return Ok(
+          Json(HoldersInfoForTick {
+              holder_to_balance: HashMap::new(),
+              nr_of_holder: total_holders,
+          })
+          .into_response(),
+      );
+    }
+
+    let paginated_holders = &holders[start_index..end_index];
+
+
+    let mut holder_to_balance: HashMap<String, HolderBalanceForTick> = HashMap::new();
+
+    for script_key in paginated_holders {
+      if let Some(balance) = index
+          .get_prc20_balance(script_key, &tick)
+          .map_err(|err| ServerError::BadRequest(err.to_string()))
+          .unwrap_or(None)
+      {
+          let token_info_clone = token_info.clone().unwrap();
+          let decimals = token_info_clone.decimal;
+          let overall_balance = balance.overall_balance;
+          let transferable_balance = balance.transferable_balance;
+          holder_to_balance.insert(
+              script_key.to_string(),
+              HolderBalanceForTick {
+                  overall_balance: format_balance(overall_balance, decimals),
+                  transferable_balance: format_balance(transferable_balance, decimals),
+                  available_balance: format_balance(overall_balance - transferable_balance, decimals),
+              },
+          );
+      }
+    }
+    Ok(
+      Json(HoldersInfoForTick {
+          holder_to_balance,
+          nr_of_holder: total_holders,
+      })
+      .into_response(),
+    )
+  }
+
   async fn prc20_tick_holder(
     Extension(index): Extension<Arc<Index>>,
     Path(tick): Path<String>,
@@ -1369,6 +1525,32 @@ impl Server {
         "No token holder info found".to_string(),
       ))
     }
+  }
+
+  async fn prc20_tick_holder_count(
+    Extension(index): Extension<Arc<Index>>,
+    Query(query): Query<Prc20HolderCountQuery>,
+  ) -> Result<Response, ServerError> {
+    let ticks: Result<Vec<Tick>, ServerError> = query
+        .ticks
+        .split(',')
+        .map(|tick| Tick::from_str(tick).map_err(|err| ServerError::BadRequest(err.to_string())))
+        .collect();
+
+    let ticks = match ticks {
+        Ok(ticks) => ticks,
+        Err(err) => return Err(err),
+    };
+
+    let holder_counts = index
+        .get_prc20_token_holders_count_batch(&ticks)
+        .map_err(|err| ServerError::InternalServerError(err.to_string()))?;
+
+    let response_body = serde_json::json!({
+        "holder_counts": holder_counts
+    });
+
+    Ok(Response::new(response_body.to_string().into()))
   }
 
   async fn prc20_all_tick_info(

@@ -983,6 +983,31 @@ impl Index {
     }
   }
 
+
+  pub(crate) fn get_prc20_token_holders_count_batch(
+    &self,
+    ticks: &[Tick],
+  ) -> Result<HashMap<String, usize>> {
+    let mut result = HashMap::new();
+
+    if self.block_count().unwrap() < self.first_inscription_height {
+        return Ok(result);
+    }
+
+    let rtx = self.database.begin_read()?;
+    let prc20_token_holder = rtx.open_multimap_table(PRC20_TOKEN_HOLDER)?;
+
+    for tick in ticks {
+        let key = tick.to_lowercase().hex();
+        let count = prc20_token_holder
+            .get(key.as_str())?
+            .count();
+        result.insert(key, count);
+    }
+
+    Ok(result)
+  }
+
   pub(crate) fn get_prc20_transferable_by_range(
     &self,
     script: &ScriptKey,
