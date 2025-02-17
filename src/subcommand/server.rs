@@ -366,6 +366,7 @@ impl Server {
         .route("/prc20/validate", get(Self::prc20_validate))
         .route("/prc20/ticks", get(Self::prc20_all_ticks))
         .route("/prc20/tick/holder/:tick", get(Self::prc20_tick_holder))
+        .route("/prc20/tick/holder/paged/:tick", get(Self::paged_prc20_tick_holder))
         .route("/prc20/tick/holder/count", get(Self::prc20_tick_holder_count))
         .route("/dunes_on_outputs", get(Self::dunes_by_outputs))
         .route("/sat/:sat", get(Self::sat))
