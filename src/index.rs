@@ -1002,7 +1002,7 @@ impl Index {
         let count = prc20_token_holder
             .get(key.as_str())?
             .count();
-        result.insert(key, count);
+        result.insert(tick.to_string(), count);
     }
 
     Ok(result)
